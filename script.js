@@ -47,6 +47,7 @@ function circle(x, y, color) {
   this.angle = 0;
   this.rotationSpeed = (Math.random() * 0.1) - 0.05;
   this.bounceCount = 0;
+  this.trail = [];
 }
 
 function createcircle() {
@@ -74,21 +75,19 @@ function resolveCollision(a, b) {
   b.vx += p * a.mass * nx;
   b.vy += p * a.mass * ny;
 
-  // Slightly separate overlapping circles
   const overlap = 0.5 * (a.radius + b.radius - distance + 1);
   a.x -= overlap * nx;
   a.y -= overlap * ny;
   b.x += overlap * nx;
   b.y += overlap * ny;
 
-  // Change color on collision
   a.color = getRandomColor();
   b.color = getRandomColor();
 }
 
 // ======= GAME LOOP =======
 function gameLoop(timestamp) {
-  ctx.fillStyle = '#4FC3F7'; // blue water background
+  ctx.fillStyle = '#4FC3F7';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   if (timestamp - lastSpawnTime > spawnInterval) {
@@ -105,6 +104,9 @@ function gameLoop(timestamp) {
     c.x += c.vx;
     c.y += c.vy;
     c.angle += c.rotationSpeed;
+
+    c.trail.push({ x: c.x, y: c.y });
+    if (c.trail.length > 10) c.trail.shift();
 
     if (c.y + c.radius >= canvas.height) {
       c.y = canvas.height - c.radius;
@@ -142,6 +144,17 @@ function gameLoop(timestamp) {
       updatedObjs.push(c);
     }
 
+    // Draw trail
+    ctx.beginPath();
+    for (let t = 0; t < c.trail.length; t++) {
+      const point = c.trail[t];
+      ctx.moveTo(point.x, point.y);
+      ctx.arc(point.x, point.y, 1.5, 0, Math.PI * 2);
+    }
+    ctx.fillStyle = 'white';
+    ctx.fill();
+
+    // Draw circle
     ctx.beginPath();
     ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
     ctx.fillStyle = c.color;
